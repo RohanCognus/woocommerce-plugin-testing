@@ -1,0 +1,18 @@
+# Ignore Composer's vendor directory
+vendor/
+
+# Node modules (if used)
+node_modules/
+
+# WordPress core files (optional, as you don't need to track WordPress core)
+wordpress/
+
+# PHPUnit cache and logs
+.phpunit.result.cache
+logs/
+coverage/
+
+# OS-specific or editor-specific files
+.DS_Store
+Thumbs.db
+*.log
