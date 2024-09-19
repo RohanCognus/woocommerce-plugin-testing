@@ -2,6 +2,9 @@
 
 namespace Yoast\PHPUnitPolyfills\Polyfills;
 
+use PHPUnit\SebastianBergmann\Exporter\Exporter as Exporter_In_Phar_Old;
+use PHPUnitPHAR\SebastianBergmann\Exporter\Exporter as Exporter_In_Phar;
+use SebastianBergmann\Exporter\Exporter;
 use Yoast\PHPUnitPolyfills\Helpers\ResourceHelper;
 
 /**
@@ -23,11 +26,14 @@ trait AssertClosedResource {
 	 * @return void
 	 */
 	public static function assertIsClosedResource( $actual, $message = '' ) {
-		if ( $message === '' ) {
-			$message = \sprintf( 'Failed asserting that %s is of type "resource (closed)"', \var_export( $actual, true ) );
+		$exporter = self::getPHPUnitExporterObject();
+		$msg      = \sprintf( 'Failed asserting that %s is of type "resource (closed)"', $exporter->export( $actual ) );
+
+		if ( $message !== '' ) {
+			$msg = $message . \PHP_EOL . $msg;
 		}
 
-		static::assertTrue( ResourceHelper::isClosedResource( $actual ), $message );
+		static::assertTrue( ResourceHelper::isClosedResource( $actual ), $msg );
 	}
 
 	/**
@@ -39,11 +45,18 @@ trait AssertClosedResource {
 	 * @return void
 	 */
 	public static function assertIsNotClosedResource( $actual, $message = '' ) {
-		if ( $message === '' ) {
-			$message = \sprintf( 'Failed asserting that %s is not of type "resource (closed)"', \var_export( $actual, true ) );
+		$exporter = self::getPHPUnitExporterObject();
+		$type     = $exporter->export( $actual );
+		if ( $type === 'NULL' ) {
+			$type = 'resource (closed)';
+		}
+		$msg = \sprintf( 'Failed asserting that %s is not of type "resource (closed)"', $type );
+
+		if ( $message !== '' ) {
+			$msg = $message . \PHP_EOL . $msg;
 		}
 
-		static::assertFalse( ResourceHelper::isClosedResource( $actual ), $message );
+		static::assertFalse( ResourceHelper::isClosedResource( $actual ), $msg );
 	}
 
 	/**
@@ -64,5 +77,24 @@ trait AssertClosedResource {
 	 */
 	public static function shouldClosedResourceAssertionBeSkipped( $actual ) {
 		return ( ResourceHelper::isResourceStateReliable( $actual ) === false );
+	}
+
+	/**
+	 * Helper function to obtain an instance of the Exporter class.
+	 *
+	 * @return Exporter|Exporter_In_Phar|Exporter_In_Phar_Old
+	 */
+	private static function getPHPUnitExporterObject() {
+		if ( \class_exists( 'SebastianBergmann\Exporter\Exporter' ) ) {
+			// Composer install or really old PHAR files.
+			return new Exporter();
+		}
+		elseif ( \class_exists( 'PHPUnitPHAR\SebastianBergmann\Exporter\Exporter' ) ) {
+			// PHPUnit PHAR file for 8.5.38+, 9.6.19+, 10.5.17+ and 11.0.10+.
+			return new Exporter_In_Phar();
+		}
+
+		// PHPUnit PHAR file for < 8.5.38, < 9.6.19, < 10.5.17 and < 11.0.10.
+		return new Exporter_In_Phar_Old();
 	}
 }

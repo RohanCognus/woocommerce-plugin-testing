@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '9a9d5d40e52b703182437cdf2ad0609892be1357',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '9a9d5d40e52b703182437cdf2ad0609892be1357',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -335,9 +335,9 @@
             'dev_requirement' => true,
         ),
         'yoast/phpunit-polyfills' => array(
-            'pretty_version' => '1.0.0',
-            'version' => '1.0.0.0',
-            'reference' => '5d257d5a6977137016f3df440ce640ce72ffd61a',
+            'pretty_version' => '1.1.2',
+            'version' => '1.1.2.0',
+            'reference' => 'e9c8413de4c8ae03d2923a44f17d0d7dad1b96be',
             'type' => 'library',
             'install_path' => __DIR__ . '/../yoast/phpunit-polyfills',
             'aliases' => array(),

@@ -3,13 +3,21 @@
 namespace Yoast\PHPUnitPolyfills;
 
 use PHPUnit\Runner\Version as PHPUnit_Version;
+use PHPUnit_Runner_Version;
 
 if ( \class_exists( 'Yoast\PHPUnitPolyfills\Autoload', false ) === false ) {
 
 	/**
 	 * Custom autoloader.
 	 */
-	class Autoload {
+	final class Autoload {
+
+		/**
+		 * Version number.
+		 *
+		 * @var string
+		 */
+		const VERSION = '1.1.2';
 
 		/**
 		 * Loads a class.
@@ -27,7 +35,7 @@ if ( \class_exists( 'Yoast\PHPUnitPolyfills\Autoload', false ) === false ) {
 			if ( $className === 'Error' || $className === 'TypeError' ) {
 				$file = \realpath( __DIR__ . '/src/Exceptions/' . $className . '.php' );
 
-				if ( \file_exists( $file ) === true ) {
+				if ( \is_string( $file ) && \file_exists( $file ) === true ) {
 					require_once $file;
 					return true;
 				}
@@ -97,6 +105,10 @@ if ( \class_exists( 'Yoast\PHPUnitPolyfills\Autoload', false ) === false ) {
 					self::loadAssertObjectEquals();
 					return true;
 
+				case 'Yoast\PHPUnitPolyfills\Polyfills\AssertObjectProperty':
+					self::loadAssertObjectProperty();
+					return true;
+
 				case 'Yoast\PHPUnitPolyfills\TestCases\TestCase':
 					self::loadTestCase();
 					return true;
@@ -116,7 +128,7 @@ if ( \class_exists( 'Yoast\PHPUnitPolyfills\Autoload', false ) === false ) {
 				default:
 					$file = \realpath( __DIR__ . '/src/' . \strtr( \substr( $className, 23 ), '\\', '/' ) . '.php' );
 
-					if ( \file_exists( $file ) === true ) {
+					if ( \is_string( $file ) && \file_exists( $file ) === true ) {
 						require_once $file;
 						return true;
 					}
@@ -414,14 +426,29 @@ if ( \class_exists( 'Yoast\PHPUnitPolyfills\Autoload', false ) === false ) {
 		}
 
 		/**
+		 * Load the AssertObjectProperty polyfill or an empty trait with the same name
+		 * if a PHPUnit version is used which already contains this functionality.
+		 *
+		 * @return void
+		 */
+		public static function loadAssertObjectProperty() {
+			if ( \method_exists( '\PHPUnit\Framework\Assert', 'assertObjectHasProperty' ) === false ) {
+				// PHPUnit < 9.6.11.
+				require_once __DIR__ . '/src/Polyfills/AssertObjectProperty.php';
+				return;
+			}
+
+			// PHPUnit >= 9.6.11.
+			require_once __DIR__ . '/src/Polyfills/AssertObjectProperty_Empty.php';
+		}
+
+		/**
 		 * Load the appropriate TestCase class based on the PHPUnit version being used.
 		 *
 		 * @return void
 		 */
 		public static function loadTestCase() {
-			if ( \class_exists( '\PHPUnit_Runner_Version' ) === true
-				|| \version_compare( PHPUnit_Version::id(), '8.0.0', '<' )
-			) {
+			if ( \version_compare( self::getPHPUnitVersion(), '8.0.0', '<' ) ) {
 				// PHPUnit < 8.0.0.
 				require_once __DIR__ . '/src/TestCases/TestCasePHPUnitLte7.php';
 				return;
@@ -437,7 +464,7 @@ if ( \class_exists( 'Yoast\PHPUnitPolyfills\Autoload', false ) === false ) {
 		 * @return void
 		 */
 		public static function loadTestListenerDefaultImplementation() {
-			if ( \class_exists( '\PHPUnit_Runner_Version' ) === true ) {
+			if ( \version_compare( self::getPHPUnitVersion(), '6.0.0', '<' ) ) {
 				/*
 				 * Alias one particular PHPUnit 4/5 class to its PHPUnit >= 6 name.
 				 *
@@ -466,6 +493,26 @@ if ( \class_exists( 'Yoast\PHPUnitPolyfills\Autoload', false ) === false ) {
 
 			// PHPUnit >= 7.0.0.
 			require_once __DIR__ . '/src/TestListeners/TestListenerDefaultImplementationPHPUnitGte7.php';
+		}
+
+		/**
+		 * Retrieve the PHPUnit version id.
+		 *
+		 * As both the pre-PHPUnit 6 class, as well as the PHPUnit 6+ class contain the `id()` function,
+		 * this should work independently of whether or not another library may have aliased the class.
+		 *
+		 * @return string Version number as a string.
+		 */
+		public static function getPHPUnitVersion() {
+			if ( \class_exists( '\PHPUnit\Runner\Version' ) ) {
+				return PHPUnit_Version::id();
+			}
+
+			if ( \class_exists( '\PHPUnit_Runner_Version' ) ) {
+				return PHPUnit_Runner_Version::id();
+			}
+
+			return '0';
 		}
 	}
 
